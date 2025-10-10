@@ -1,0 +1,53 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.so
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore pyenv version file
+.python-version
+
+# ---- Environment / virtualenv ----
+.env
+.venv
+venv/
+ENV/
+env/
+*.env
+
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs / cache ----
+*.log
+*.dat
+*.db
+*.sqlite
+*.sqlite3
+*.tmp
+.cache/
+__pycache__/
+
+
+# ---- Build / Packaging ----
+build/
+dist/
+*.egg-info/
+
+
+# ---- System / misc ----
+*.bak
+*.swp
+*.zip
+*.tar
+*.tar.gz
+
+
+
