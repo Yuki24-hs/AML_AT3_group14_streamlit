@@ -1,0 +1,12 @@
+[theme]
+base = "light"
+backgroundColor = "#FFFFFF"         # white main background
+textColor = "#000000"               # black text
+font = "sans serif"
+
+[theme.sidebar]
+backgroundColor = "#0C2E5B" # navy sidebar
+textColor = "#FFFFFF"   # white text in sidebar
+
+
+
