@@ -25,10 +25,10 @@ page = st.sidebar.radio(
 )
 
 MODULE_MAP = {
-    "Student 1": "students.25428006_Mitali",
-    "Student 2": "students.XXX_Siheng",
-    "Student 3": "students.XXX_Queenie",
-    "Student 4": "students.25229384_Yukthi",
+    "Bitcoin": "students.25229384_Yukthi",
+    "Ethereum": "students.13475823_Siheng",
+    "XRP": "students.25658663_Queenie",
+    "Solana": "students.25428006_Mitali",
 }
 
 
