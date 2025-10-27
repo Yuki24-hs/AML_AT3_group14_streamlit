@@ -13,33 +13,14 @@ import time
 import pandas as pd
 from fastapi import FastAPI
 import os
-from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 import joblib
+from sklearn.preprocessing import OneHotEncoder
+import lightgbm
 
 #---------------------------------------
 # Functions
 #---------------------------------------
-
-def log_tran(df):
-    for col in ['volume', 'marketCap', 'volume_to_mcap']:
-        if col in df.columns:
-            df[col] = np.log1p(df[col].fillna(0))
-    return df
-
-def price_change(df):
-    df['price_change'] = df['close'] - df['open']
-    return df
-
-def price_change_pct(df):
-    df['price_change_pct'] = (df['close'] - df['open']) / df['open'] * 100
-    return df
-
-def volume_to_mcap(df):
-    df['volume_to_mcap'] = df['volume'] / df['marketCap']
-    return df
-
-
 
 #---------------------------------------
 # Data Extract
@@ -150,13 +131,13 @@ def sign(private_key: str, message: bytes) -> str:
 #---------------------------------------
 current_dir = os.getcwd()  # current directory
 joblib_folder = os.path.join(current_dir, "api", "models", "13475823_Siheng")
-model_path = os.path.join(joblib_folder, "catboost_model.joblib")
-tf_path = os.path.join(joblib_folder, "scaler.joblib")
+model_path = os.path.join(joblib_folder, "lightgbm_model.joblib")
+encode_path = os.path.join(joblib_folder, "encode.joblib")
 
-scaler = joblib.load(tf_path)
+encode = joblib.load(encode_path)
 model = joblib.load(model_path)
 
-app = FastAPI(title="CatBoost Regression API")
+app = FastAPI(title="Crypto Currency Next Day Prediction")
 
 @app.post("/predict")
 def predict():
@@ -174,9 +155,14 @@ def predict():
     df['price_change'] = df['close'] - df['open']
     df['volume_to_mcap'] =df['volume'] / df['marketCap']
     df['price_change_pct'] = (df['close'] - df['open']) / df['open'] * 100
+    df['range'] = df['high'] - df['low']
+    df['volatility'] = df['range'] / df['close']
 
+    categorical_cols = ["open_hour", "open_day", "open_month", "open_year"]
+    numeric_cols = [col for col in df.columns if col not in categorical_cols+ ["high"]]
+    encoded_df = encode.transform(df[categorical_cols])
+    num_df = df[numeric_cols].to_numpy()
+    df_transformed = np.hstack([num_df, encoded_df])
+    pred = model.predict(df_transformed)
 
-    scaled_df = scaler.transform(df)
-    pred = model.predict(scaled_df)
-
-    return {"prediction": float(pred[0])}
+    return {"prediction": float(round(pred[0], 4))}
