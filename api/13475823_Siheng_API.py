@@ -48,14 +48,14 @@ def main():
         method="GET",
         path="/0/public/OHLC",
         query={
-            "pair": "ETH/AUD",
+            "pair": "ETH/USD",
             "interval": 1440,
         },
         environment="https://api.kraken.com",
     )
     data = response.read().decode()
     json_data = json.loads(data)
-    eth_aud = json_data["result"]["ETH/AUD"]
+    eth_aud = json_data["result"]["ETH/USD"]
 
     cols = ["time", "open", "high", "low", "close", "vwap", "volumn_f", "count"]
     df = pd.DataFrame(eth_aud, columns=cols)

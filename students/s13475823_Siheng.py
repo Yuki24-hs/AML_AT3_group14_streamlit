@@ -22,75 +22,23 @@ def fetch_data():
         return None
 
 
-# ---------- DATA PREPROCESSING ----------
+# ---------- Function & Helper ----------
 def preprocess_data(df):
     """Convert timestamp and sort values."""
     df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S")
     return df.sort_values("timestamp")
 
-
-def filter_by_range(df):
-    """Allow user to filter dataframe by date range via dropdown."""
-    st.markdown("### ⏳ Filter by Date Range")
-    option = st.selectbox("Select Time Range:", ("All", "1 Week", "1 Month", "1 Year"), index=0)
-
-    latest_date = df["timestamp"].max()
-    if option == "1 Week":
-        df = df[df["timestamp"] >= latest_date - timedelta(weeks=1)]
-    elif option == "1 Month":
-        df = df[df["timestamp"] >= latest_date - timedelta(days=30)]
-    elif option == "1 Year":
-        df = df[df["timestamp"] >= latest_date - timedelta(days=365)]
-
-    return df
+def format_large_number(num):
+    """Format large numbers with units M (million) or B (billion)."""
+    if abs(num) >= 1_000_000_000:
+        return f"${num / 1_000_000_000:.2f}B"
+    elif abs(num) >= 1_000_000:
+        return f"${num / 1_000_000:.2f}M"
+    else:
+        return f"${num:,.0f}"
 
 
-# ---------- CHARTS ----------
-def plot_high_price(df):
-    """Plot high price line chart with hover details."""
-    y_min, y_max = df["high"].min(), df["high"].max()
-    hover = alt.selection_point(fields=["timestamp"], nearest=True, on="mouseover", empty=False)
-
-    base = alt.Chart(df).encode(
-        x=alt.X("timestamp:T", title="Date"),
-        y=alt.Y("high:Q", title="High Price", scale=alt.Scale(domain=[y_min, y_max])),
-    )
-
-    line = base.mark_line(interpolate="monotone")
-    points = base.mark_circle(size=60).encode(
-        tooltip=[
-            alt.Tooltip("timestamp:T", title="Timestamp"),
-            alt.Tooltip("close:Q", title="Close", format=".2f"),
-            alt.Tooltip("high:Q", title="High", format=".2f"),
-            alt.Tooltip("low:Q", title="Low", format=".2f"),
-            alt.Tooltip("volume:Q", title="Volume", format=".2f"),
-            alt.Tooltip("marketCap:Q", title="Market Cap", format=".2f"),
-        ],
-        opacity=alt.condition(hover, alt.value(1), alt.value(0)),
-    ).add_params(hover)
-
-    chart = (line + points).properties(width="container", height=400)
-    st.subheader("High Price")
-    st.altair_chart(chart, use_container_width=True)
-
-
-def plot_market_cap(df):
-    """Plot daily market cap bar chart."""
-    chart = (
-        alt.Chart(df)
-        .mark_bar()
-        .encode(
-            x=alt.X("timestamp:T", title="Date"),
-            y=alt.Y("marketCap:Q", title="Market Cap")
-        )
-        .properties(width=800, height=300)
-        .configure_view(stroke=None)
-        .configure_axis(grid=False)
-    )
-    st.subheader("Daily Market Cap")
-    st.altair_chart(chart, use_container_width=True)
-
-# ---------- PREDICTION ----------
+# ---------- Display Plots ----------
 def fetch_prediction(period):
     """Fetch prediction data from API with a given period."""
     try:
@@ -100,6 +48,119 @@ def fetch_prediction(period):
     except Exception as e:
         st.error(f"Error calling prediction API: {e}")
         return None
+
+def show_info_cards(api_df):
+    """Display crypto metrics inside bordered cards."""
+    api_df['timestamp'] = pd.to_datetime(api_df['timestamp'])
+    latest_time = api_df['timestamp'].max()
+
+    df_1h = api_df[api_df['timestamp'] >= latest_time - timedelta(hours=1)]
+    df_24h = api_df[api_df['timestamp'] >= latest_time - timedelta(hours=24)]
+
+    latest = api_df.iloc[-1]
+    current_close = latest['close']
+    current_marketcap = latest['marketCap']
+    current_volume = latest['volume']
+
+    close_1h_ago = df_1h.iloc[0]['close'] if len(df_1h) > 1 else current_close
+    close_24h_ago = df_24h.iloc[0]['close'] if len(df_24h) > 1 else current_close
+
+    pct_change_1h = ((current_close - close_1h_ago) / close_1h_ago) * 100 if close_1h_ago != 0 else 0
+    pct_change_24h = ((current_close - close_24h_ago) / close_24h_ago) * 100 if close_24h_ago != 0 else 0
+
+    high_24h = df_24h['high'].max() if not df_24h.empty else latest['high']
+    low_24h = df_24h['low'].min() if not df_24h.empty else latest['low']
+    vol_mkt_ratio = current_volume / current_marketcap if current_marketcap != 0 else 0
+
+    st.markdown("""
+        <style>
+            .metric-card {
+                border: 2px solid #4CAF50;
+                border-radius: 12px;
+                padding: 16px;
+                background-color: #f9f9f9;
+                text-align: center;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+                margin-bottom: 15px;
+            }
+            .metric-label {
+                font-size: 18px;
+                color: #111;
+                font-weight: 800;
+                margin-bottom: 6px;
+            }
+            .metric-value {
+                font-size: 22px;
+                font-weight: 700;
+                color: #222;
+            }
+            .metric-delta {
+                font-size: 14px;
+                color: #008000;
+                font-weight: 600;
+            }
+            .metric-delta.negative {
+                color: #cc0000;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 📊 Market Overview")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Market Cap</div>
+                <div class="metric-value">{format_large_number(current_marketcap)}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Volume (24h)</div>
+                <div class="metric-value">{format_large_number(current_volume)}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">High (24h)</div>
+                <div class="metric-value">${high_24h:,.2f}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Low (24h)</div>
+                <div class="metric-value">${low_24h:,.2f}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        delta_1h_class = "metric-delta" if pct_change_1h >= 0 else "metric-delta negative"
+        delta_24h_class = "metric-delta" if pct_change_24h >= 0 else "metric-delta negative"
+
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Price Change (1h)</div>
+                <div class="metric-value">{pct_change_1h:.2f}%</div>
+                <div class="{delta_1h_class}">{'▲' if pct_change_1h >= 0 else '▼'} {abs(pct_change_1h):.2f}%</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">Price Change (24h)</div>
+                <div class="metric-value">{pct_change_24h:.2f}%</div>
+                <div class="{delta_24h_class}">{'▲' if pct_change_24h >= 0 else '▼'} {abs(pct_change_24h):.2f}%</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown(f"**Vol/Mkt Cap (24h):** {vol_mkt_ratio:.4f}")
+
 
 def plot_prediction_vs_actual(df_real, period_label, period_param):
     """Plot predicted vs real high price trend for a given period."""
@@ -158,11 +219,11 @@ def plot_prediction_vs_actual(df_real, period_label, period_param):
 
         combined = (real_line + pred_line).properties(width="container", height=400)
         st.altair_chart(combined, use_container_width=True)
-        st.dataframe(df_pred, use_container_width=True)
+        # st.dataframe(df_pred, use_container_width=True)
 
 def plot_next_day_prediction(df_real):
     """Fetch next-day prediction from API and plot last 7 days real high and next-day prediction."""
-    st.subheader("Next-Day Prediction vs Last 7 Days Actual")
+    st.subheader("Next-Day Prediction")
 
     with st.spinner("Fetching next-day prediction..."):
         data = fetch_prediction("1d")
@@ -212,37 +273,42 @@ def plot_next_day_prediction(df_real):
 
         chart = (real_line + pred_line).properties(width="container", height=400)
         st.altair_chart(chart, use_container_width=True)
-        st.dataframe(df_pred, use_container_width=True)
+        # st.dataframe(df_pred, use_container_width=True)
 
 # ---------- MAIN APP ----------
 def run():
-    st.title("AT3 Advanced Machine Learning Model 2")
+    st.title("Ethereum(ETH) Price Prediction")
+    st.write("*Description placeolder*")
 
     df = fetch_data()
     if df is None or df.empty:
         return
 
     df = preprocess_data(df)
-    df = filter_by_range(df)
 
-    plot_high_price(df)
-    plot_market_cap(df)
-
-    # Prediction section
-    st.subheader("Predictions")
+    # Market Overview
+    show_info_cards(df)
 
     # Plot charts full width based on button click
     df_recent = df.tail(7)
     if not df_recent.empty:
-        tab1, tab2 = st.tabs(["1-Week Prediction", "Next-Day Prediction"])
-
-        with tab1:
+        col1, col2 = st.columns(2)
+        with col1:
             plot_prediction_vs_actual(df_recent, "1-Week", "1w")
-        
-        with tab2:
+
+        # Next-Day prediction (button and plot handled internally)
+        with col2:
             plot_next_day_prediction(df_recent)
 
+        # tab1, tab2 = st.tabs(["1-Week Prediction", "Next-Day Prediction"])
+
+        # with tab1:
+        #     plot_prediction_vs_actual(df_recent, "1-Week", "1w")
+        
+        # with tab2:
+        #     plot_next_day_prediction(df_recent)
 
 
-if __name__ == "__main__":
-    run()
+
+# if __name__ == "__main__":
+#     run()
