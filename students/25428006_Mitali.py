@@ -196,7 +196,7 @@ def get_7d_data(url_path):
 @st.cache_data(ttl=3600)  # cache for 5 minutes (adjust as needed)
 def get_current_date(url):
     """Fetch current date from API and cache the result."""
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, timeout=800)
     if response.status_code == 200:
         return response.json()
     else:
@@ -277,42 +277,42 @@ def run():
             st.metric(
                 "High",
                 f"{current_high:0.1f}",
-                delta=f"{((current_high - previous_high)/previous_high):0.2f} %"
+                delta=f"{(((current_high - previous_high)/previous_high)*100):0.2f} %"
             )
         
         with cols[1]:
             st.metric(
                 "Low",
                 f"{current_low:0.1f}",
-                delta=f"{((current_low - previous_low)/previous_low):0.2f} %"
+                delta=f"{(((current_low - previous_low)/previous_low)*100):0.2f} %"
             )
         
         with cols[2]:
             st.metric(
                 "Open",
                 f"{current_open:0.1f}",
-                delta=f"{((current_open - previous_open)/previous_open):0.2f} %"
+                delta=f"{(((current_open - previous_open)/previous_open)*100):0.2f} %"
             )
         
         with cols[3]:
             st.metric(
                 "Close",
                 f"{current_close:0.1f}",
-                delta=f"{((current_close - previous_close)/previous_close):0.2f} %"
+                delta=f"{(((current_close - previous_close)/previous_close)*100):0.2f} %"
             )
         
         with cols[4]:
             st.metric(
                 "Volume",
                 f"{current_volume:0.1f}",
-                delta=f"{((current_volume - previous_volume)/previous_volume):0.2f} %"
+                delta=f"{(((current_volume - previous_volume)/previous_volume)*100):0.2f} %"
             )
         
         with cols[5]:
             st.metric(
                 "Market Capital",
                 f"{format_millions(current_marketCap)}",
-                delta=f"{((current_marketCap - previous_marketCap)/previous_marketCap):0.2f} %"
+                delta=f"{(((current_marketCap - previous_marketCap)/previous_marketCap)*100):0.2f} %"
             )
         
         cols2 = st.columns([3,1], gap="medium")
@@ -352,6 +352,42 @@ def run():
                         ).interactive()  # zoom & pan
 
                         st.altair_chart(chart, use_container_width=True)
+        with cols2[1]:
+            # st.metric(
+            #     label="High Price Change 24H",
+            #     value=f"${current_high - previous_high:,.2f}",
+            #     delta=f"{(((current_high - previous_high)/previous_high)*100):0.2f}%"
+            # )   
+            pc_color = "green" if (current_high - previous_high) >= 0 else "red"
+            st.markdown(
+                f"""
+                <div style="
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                    height: 400px;  /* adjust as needed */
+                    width: 100%;
+                    background-color: #f5f5f5;
+                    border-radius: 10px;
+                    padding: 20px;
+                ">
+                    <div style="font-size: 18px; font-weight: 500;">High Price Change</div>
+                    <div style="font-size: 18px; font-weight: 500;">24H</div>
+                    <div style="font-size: 32px; font-weight: 700; margin-top: 10px; color: {pc_color};">${current_high - previous_high:,.2f}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )  
+
+    st.divider()
+    
+    # section for forecasts  
+    st.markdown(
+    """
+    ## Financial Forecasts
+    """
+    )
 
     # get the cached predicted data
     with st.spinner("🔄 Loading predictions..."):
