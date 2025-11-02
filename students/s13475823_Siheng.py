@@ -5,7 +5,7 @@ import altair as alt
 from datetime import datetime, timedelta
 
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "https://aml-eth-api-13475823.onrender.com"
 API_URL_PREDICT = f"{API_URL}/predict"
 
 
