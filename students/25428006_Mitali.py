@@ -492,7 +492,17 @@ def run():
         with cols_bottom[0]:
 
             # take input and produce output
-            st.write("tbd")
+            user_input = st.text_input("Test the model on a previous date (YYYY-MM-DD)", value="2024-03-01")
+            
+            if user_input:
+                prediction_user = get_next_data(API_URL + API_PREDICT_ND, date = user_input)
+
+                # validation error is returned as string
+                if isinstance(prediction_user, str):
+                    st.warning(prediction_user, icon = "⚠️")
+                
+                else:
+                    st.dataframe(prediction_user, use_container_width=True)
         
         with cols_bottom[1]:
 
