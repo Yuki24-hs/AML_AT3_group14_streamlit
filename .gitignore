@@ -3,3 +3,6 @@
 
 # Ignore pyenv version file
 .python-version
+
+# ignore pycache
+__pycache__/

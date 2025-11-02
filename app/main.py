@@ -21,12 +21,11 @@ import time
 
 import streamlit as st
 
-# page config
 st.set_page_config(
     page_title="AT3 Group 14", layout="wide", initial_sidebar_state="expanded"
 )
 
-ROOT = Path(__file__).resolve().parent.parent  # AT3_GROUP14/
+ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
@@ -41,6 +40,7 @@ page = st.sidebar.radio(
     label_visibility="collapsed",
 )
 
+# Map visible page names -> module import paths
 MODULE_MAP = {
     "Bitcoin": "students.25229384_Yukthi",
     "Ethereum": "students.13475823_Siheng",
@@ -274,26 +274,26 @@ def show_main():
     st.markdown("# AT3 Group 14 Project Overview")
     st.write(
         """
-        **Project:** 
+    **Project:** 
 
-        **Goal:** Business problem
+    **Goal:** Business problem
 
-        **Dataset(s):** Optional.
+    **Dataset(s):** Optional.
 
-        **Methods & Stack:**
-        - Modeling: (e.g., Random Forest, XGBoost, Logistic Regression)
-        - App: Streamlit
-        - Backend / APIs: Fast API
-        - Infra: (Docker/Poetry)
+    **Methods & Stack:**
+    - Modeling: (e.g., Random Forest, XGBoost, Logistic Regression)
+    - App: Streamlit
+    - Backend / APIs: Fast API
+    - Infra: (Docker/Poetry)
 
-        **Team:** 
-        - Member 1: Mitali H Balki ( 25428006 ) 
-        - Member 2: Siheng Li ( 13475823)
-        - Member 3: Queenie Goh ( XXX )
-        - Member 4: Yukthi Hosadurga Shivalingegowda ( 25229384 )
+    **Team:** 
+    - Member 1: Mitali H Balki ( 25428006 ) 
+    - Member 2: Siheng Mu ( 13475823)
+    - Member 3: Queenie Goh ( XXX )
+    - Member 4: Yukthi Hosadurga Shivalingegowda ( 25229384 )
 
-        **Next steps / risks:** Later.
-        """
+    **Next steps / risks:** Later.
+    """
     )
     df = main()
     st.markdown("## Market Trend Lines")
@@ -303,19 +303,25 @@ def show_main():
     agg_df = aggregate_crypto_data(df)
     st.dataframe(agg_df, use_container_width=True)
 
+st.sidebar.title("Navigation")
+nav_options = ["Main"] + list(MODULE_MAP.keys())
+page = st.sidebar.radio("Go to", nav_options, label_visibility="collapsed")
+
 if page == "Main":
     show_main()
 elif page == "ETH":
     Siheng_13475823.run()
 else:
-    module_path = MODULE_MAP[page]
+    module_path = MODULE_MAP.get(page)
+    if not module_path:
+        st.error(f"Page {page!r} is not configured. Available: {', '.join(MODULE_MAP)}")
+        st.stop()
+
     try:
         mod = importlib.import_module(module_path)
         if hasattr(mod, "run") and callable(mod.run):
             mod.run()
         else:
-            st.error(
-                f"`{module_path}.run()` not found. Add a `run()` function in that file."
-            )
+            st.error(f"`{module_path}.run()` not found. Add a `run()` function.")
     except ModuleNotFoundError as e:
-        st.error(f"Module not found: {module_path}\n\n" f"Details: {e}")
+        st.error(f"Module not found: {module_path}\n\nDetails: {e}")
