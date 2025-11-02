@@ -12,7 +12,8 @@ dependencies = [
     "plotly (==5.20.0)",
     "pandas (==2.2.2)",
     "requests (==2.31.0)",
-    "numpy (==1.26.4)"
+    "numpy (==1.26.4)",
+    "altair (>=5.5.0,<6.0.0)"
 ]
 
 
