@@ -133,30 +133,6 @@ def combine_data(file_path):
 
   return final_data
 
-# @st.cache_data(ttl=3600) # cache predicted data for an hour
-# def get_7d_data(url_path):
-#   """
-#   Gets the predicted data for the past 7 days (including today)
-#   """
-#   # get data from predicted 7days
-#   response = requests.get(url_path)
-
-#   # Check if the request was successful
-#   if response.status_code == 200:
-#       api_7d_data = response.json()  # Parse JSON response
-#   else:
-#       return f"Failed to fetch data. Status code: {response.status_code}"
-  
-#   # convert data to dataframe
-#   pred_dates = api_7d_data['prediction']['pred_date']
-#   pred_prices = api_7d_data['prediction']['price']
-#   api_7d_data = pd.DataFrame(data={'date': pred_dates, 'predicted_high': pred_prices})
-
-#   # sort dataframe
-#   api_7d_data['date'] = pd.to_datetime(api_7d_data['date'])
-
-#   return api_7d_data
-
 @st.cache_data(ttl=3600)  # cache predicted data for an hour
 def get_7d_data(url_path):
     """
@@ -202,6 +178,44 @@ def get_current_date(url):
     else:
         st.error(f"Failed to fetch date. Status code: {response.status_code}")
         return None
+
+# get the last predicted value for tomorrow
+@st.cache_data(ttl=3600)
+def get_next_data(url_path, date = None):
+    """
+    Gets the predicted data for the next day from a given date)
+    """
+    if date is not None:
+        url_path += f"?date={date}"
+
+    # get data from predicted 7days
+    response = requests.get(url_path)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        api_next_day = response.json()  # Parse JSON response
+
+        # convert data to dataframe
+        pred_dates = api_next_day['prediction']['pred_date']
+        pred_prices = api_next_day['prediction']['price']
+        api_next_day = pd.DataFrame(data={'date': [pd.to_datetime(pred_dates)], 'high': [float(pred_prices)]})
+
+        return api_next_day
+
+    else:
+
+        try:
+            # Try to parse JSON error message
+            error_json = response.json()
+            error_msg = error_json.get("detail", "Unknown error")
+            return error_msg
+
+        except ValueError:
+            # Response is not JSON
+            error_msg = response.text
+            return error_msg
+        
+        print(f"Failed to fetch data. Status code: {response.status_code}. Error: {error_msg}")
 
 def format_millions(value):
     """Convert large numbers to human-readable format (millions)."""
@@ -353,11 +367,7 @@ def run():
 
                         st.altair_chart(chart, use_container_width=True)
         with cols2[1]:
-            # st.metric(
-            #     label="High Price Change 24H",
-            #     value=f"${current_high - previous_high:,.2f}",
-            #     delta=f"{(((current_high - previous_high)/previous_high)*100):0.2f}%"
-            # )   
+             
             pc_color = "green" if (current_high - previous_high) >= 0 else "red"
             st.markdown(
                 f"""
@@ -381,7 +391,7 @@ def run():
             )  
 
     st.divider()
-    
+
     # section for forecasts  
     st.markdown(
     """
@@ -389,9 +399,105 @@ def run():
     """
     )
 
+    disclaimer = 'This project is developed for academic and research purposes only. Cryptocurrency markets are inherently volatile and speculative; therefore, model forecasts should not be used as the sole basis for any trading or investment decision. The author and affiliated institution accept no liability for financial losses or actions taken based on the results of this study.'
+    st.warning(disclaimer, icon = "⚠️")
+
     # get the cached predicted data
     with st.spinner("🔄 Loading predictions..."):
+        # get data and then display the charts
         predicted_data = get_7d_data(API_URL + API_PREDICT_7D)
-        st.write('data was loaded')
+        predicted_data['date'] = pd.to_datetime(predicted_data['date']).dt.date
+        prediction_next_day = get_next_data(API_URL + API_PREDICT_ND, date = None)
+        prediction_next_day['date'] = prediction_next_day['date'].dt.date
+        
+        # get last 7 rows of data from combined data
+        real_data = combined_data.tail(7).copy()
+        real_data = real_data[['date', 'high']]
+        real_data['date'] = real_data['date'].dt.date
+
+        # create a df for 2nd chart
+        next_df = pd.concat([real_data, prediction_next_day], ignore_index=True)
+        next_df = next_df.sort_values('date').reset_index(drop=True)
+        # only keep last two of next_df
+        next_df = next_df.tail(2).copy()
+
+        # create two columns
+        cols_pred = st.columns(2, gap="medium")
+
+        # for 7 days pred
+        y_min = min(real_data["high"].min(), predicted_data["predicted_high"].min())
+        y_max = max(real_data["high"].max(), predicted_data["predicted_high"].max())
+
+        # for next day pred
+        real_data_nd = real_data.tail(6).copy()
+        y_min_nd = min(real_data_nd["high"].min(), next_df["high"].min())
+        y_max_nd = max(real_data_nd["high"].max(), next_df["high"].max())
+
+        with cols_pred[0]:
+            # plot the actual vs predicted for 7 days
+            real_line = alt.Chart(real_data).mark_line(color="#1f77b4").encode(
+                            x=alt.X("date:T", title="Date"),
+                            y=alt.Y("high:Q", title="High Price", scale=alt.Scale(domain=[y_min, y_max])),
+                            tooltip=[
+                                alt.Tooltip("date:T", title="Date"),
+                                alt.Tooltip("high:Q", title="Actual High", format=".2f"),
+                            ]
+                        )
+            pred_line = alt.Chart(predicted_data).mark_line(strokeDash=[5, 5], color="#ff7f0e").encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y("predicted_high:Q", title="High Price", scale=alt.Scale(domain=[y_min, y_max])),
+                tooltip=[
+                    alt.Tooltip("date:T", title="Timestamp"),
+                    alt.Tooltip("predicted_high:Q", title="Predicted High", format=".2f"),
+                ]
+            )
+            combined = (
+                alt.layer(real_line, pred_line)
+                .properties(width="container", height=400)
+                .configure_legend(orient="bottom")
+            )
+            combined = (real_line + pred_line).properties(width="container", height=400).configure_legend(orient="bottom")
+            with st.container(border=False):
+                st.altair_chart(combined, use_container_width=True)
+        
+        with cols_pred[1]:
+            real_line = alt.Chart(real_data_nd).mark_line(color="#1f77b4").encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y("high:Q", title="High Price", scale=alt.Scale(domain=[y_min_nd, y_max_nd])),
+                tooltip=[
+                    alt.Tooltip("date:T", title="Date"),
+                    alt.Tooltip("high:Q", title="Actual High", format=".2f")
+                ]
+            )
+            pred_line = alt.Chart(next_df).mark_line(color="#ff7f0e", strokeDash=[5, 5]).encode(
+                x=alt.X("date:T", title="Date"),
+                y=alt.Y("high:Q", title="High Price", scale=alt.Scale(domain=[y_min_nd, y_max_nd])),
+                tooltip=[
+                    alt.Tooltip("date:T", title="Date"),
+                    alt.Tooltip("high:Q", title="Predicted High", format=".2f")
+                ]
+            )
+            chart = (
+                alt.layer(real_line, pred_line)
+                .properties(width="container", height=400)
+                .configure_legend(orient="bottom")
+            )
+            with st.container(border=False):
+                st.altair_chart(chart, use_container_width=True)
+
+        # create two columns to access predictions and to display dataframe
+
+        cols_bottom = st.columns(2, gap="medium")
+
+        with cols_bottom[0]:
+
+            # take input and produce output
+            st.write("tbd")
+        
+        with cols_bottom[1]:
+
+            # display dataframe
+            st.dataframe(combined_data[:10], use_container_width=True)
+
 
 
