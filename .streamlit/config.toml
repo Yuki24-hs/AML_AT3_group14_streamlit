@@ -19,4 +19,4 @@ baseFontSize = 14
 # Heading text
 headingFont = "sans serif"
 headingFontWeights = [600, 300, 600]
-headingFontSizes = ["3rem", "2rem", "1rem"]
+headingFontSizes = ["3rem", "2rem", "1rem"] 
