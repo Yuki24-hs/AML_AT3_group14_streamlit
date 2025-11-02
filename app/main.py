@@ -31,7 +31,7 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from students import s13475823_Siheng
+from students import Siheng_13475823
 
 # Sidebar
 st.sidebar.title("Navigation")
@@ -306,7 +306,7 @@ def show_main():
 if page == "Main":
     show_main()
 elif page == "ETH":
-    s13475823_Siheng.run()
+    Siheng_13475823.run()
 else:
     module_path = MODULE_MAP[page]
     try:
