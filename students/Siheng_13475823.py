@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 API_URL = "https://aml-eth-api-13475823.onrender.com"
 API_URL_PREDICT = f"{API_URL}/predict"
 
-st.set_page_config(page_title="Crypto Price Prediction", page_icon="💰", layout="wide")
+# st.set_page_config(page_title="Crypto Price Prediction", page_icon="💰", layout="wide")
 
 # ---------- DATA FETCHING ----------
 @st.cache_data(ttl=60)

@@ -33,12 +33,6 @@ if str(ROOT) not in sys.path:
 from students import Siheng_13475823
 
 # Sidebar
-st.sidebar.title("Navigation")
-page = st.sidebar.radio(
-    "Go to",
-    ["Main", "Student 1", "ETH", "Student 3", "Student 4"],
-    label_visibility="collapsed",
-)
 
 # Map visible page names -> module import paths
 MODULE_MAP = {
@@ -309,7 +303,7 @@ page = st.sidebar.radio("Go to", nav_options, label_visibility="collapsed")
 
 if page == "Main":
     show_main()
-elif page == "ETH":
+elif page == "Ethereum":
     Siheng_13475823.run()
 else:
     module_path = MODULE_MAP.get(page)
