@@ -1,9 +1,22 @@
 [theme]
 base = "light"
-backgroundColor = "#FFFFFF"         # white main background
-textColor = "#000000"               # black text
-font = "sans serif"
 
+# General color setup
+textColor = "#1c1919"
+primaryColor = "#00d492"
+backgroundColor = "#fafafa"
+secondaryBackgroundColor = "#ffffff"
 
+# Widgets
+showWidgetBorder = true
+borderColor = "#e7e3e4"
 
+# Base text
+font = "sans-serif"
+baseFontWeight = 400
+baseFontSize = 14
 
+# Heading text
+headingFont = "sans-serif"
+headingFontWeights = [600, 300, 600]
+headingFontSizes = ["3rem", "2rem", "1rem"]
