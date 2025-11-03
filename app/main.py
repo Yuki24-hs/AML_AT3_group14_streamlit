@@ -1,24 +1,24 @@
 # app/main.py
 from __future__ import annotations
 
-import importlib
-import sys
-import os
-import optparse
-from pathlib import Path
-import pandas as pd
-import requests
-import altair as alt
-from datetime import datetime, timedelta
-import http.client
-import urllib.request
-import urllib.parse
+import base64
 import hashlib
 import hmac
-import base64
+import http.client
+import importlib
 import json
+import optparse
+import os
+import sys
 import time
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta
+from pathlib import Path
 
+import altair as alt
+import pandas as pd
+import requests
 import streamlit as st
 
 st.set_page_config(
@@ -29,7 +29,6 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from students import Siheng_13475823
 
 # Sidebar
@@ -265,28 +264,10 @@ def plot_market_cap(df):
 
 # Main page content
 def show_main():
-    st.markdown("# AT3 Group 14 Project Overview")
+    st.markdown("# Cryptocurrency Market Analysis Dashboard")
     st.write(
         """
-    **Project:** 
-
-    **Goal:** Business problem
-
-    **Dataset(s):** Optional.
-
-    **Methods & Stack:**
-    - Modeling: (e.g., Random Forest, XGBoost, Logistic Regression)
-    - App: Streamlit
-    - Backend / APIs: Fast API
-    - Infra: (Docker/Poetry)
-
-    **Team:** 
-    - Member 1: Mitali H Balki ( 25428006 ) 
-    - Member 2: Siheng Mu ( 13475823)
-    - Member 3: Queenie Goh ( XXX )
-    - Member 4: Yukthi Hosadurga Shivalingegowda ( 25229384 )
-
-    **Next steps / risks:** Later.
+    **Project Background:** The cryptocurrency market has evolved into one of the most volatile and complex asset classes, operating continuously with sharp intraday swings and sentiment-driven price movements. Despite increasing institutional participation, forecasting remains challenging due to the absence of intrinsic valuation anchors and the influence of liquidity shocks, speculative trading, and social sentiment. These dynamics make crypto assets highly unpredictable and difficult to model using traditional quantitative approaches. This project responds to the growing demand for systematic, data-driven methods that can interpret short-term market behaviour and support informed decision-making in the digital asset ecosystem. 
     """
     )
     df = main()
