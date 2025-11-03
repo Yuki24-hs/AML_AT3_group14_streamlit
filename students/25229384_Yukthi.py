@@ -368,6 +368,28 @@ def run():
             delta_percent = (price_change / previous_high) * 100
             pc_color = "green" if price_change >= 0 else "red"
             arrow = "▲" if price_change >= 0 else "▼"
+            
+            st.markdown(
+                f"""
+                <div style="
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                    height: 400px;  /* adjust as needed */
+                    width: 100%;
+                    background-color: #f5f5f5;
+                    border-radius: 10px;
+                    padding: 20px;
+                ">
+                    <div style="font-size: 18px; font-weight: 500;">High Price Change</div>
+                    <div style="font-size: 18px; font-weight: 500;">24H</div>
+                    <div style="font-size: 32px; font-weight: 700; margin-top: 10px; color: {pc_color};">${price_change:,.2f}</div>
+                    <div style="font-size: 20px; font-weight: 600; color: {pc_color}; margin-top: 6px;">{arrow}{delta_percent:.2f}%</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     st.divider()
     # section for forecasts
