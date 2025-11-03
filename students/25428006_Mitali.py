@@ -60,7 +60,7 @@ def fetch_data(pair, interval):
    json_data = json.loads(data)
    result = json_data["result"]
    df_api = pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'vwap', 'volume', 'count'], 
-                         data = result['SOL/USD'])
+                         data = result[pair])
    return df_api
 
 # function to get data from kraken API
@@ -318,7 +318,7 @@ def run():
         with cols[4]:
             st.metric(
                 "Volume",
-                f"{current_volume:0.1f}",
+                f"{format_millions(current_volume)}",
                 delta=f"{(((current_volume - previous_volume)/previous_volume)*100):0.2f} %"
             )
         
