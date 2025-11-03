@@ -1,9 +1,9 @@
-import streamlit as st
-import pandas as pd
-import requests
-import altair as alt
 from datetime import datetime, timedelta, timezone
 
+import altair as alt
+import pandas as pd
+import requests
+import streamlit as st
 
 API_URL = "https://aml-eth-api-13475823.onrender.com"
 API_URL_PREDICT = f"{API_URL}/predict"
@@ -249,7 +249,6 @@ def plot_next_day_prediction(df_real):
             st.altair_chart(chart, use_container_width=True)
 
 
-
 # ---------- MAIN APP ----------
 def run():
     st.title("Ethereum Price Prediction")
@@ -279,8 +278,9 @@ def run():
             show_price_change_card(df)
 
     # Forcast
-    st.markdown(f"## Forcast")
-    st.write("*Disclaimer placeolder*")
+    st.markdown(f"## Forecast")
+    disclaimer = "This project is developed for academic and research purposes only. Cryptocurrency markets are inherently volatile and speculative; therefore, model forecasts should not be used as the sole basis for any trading or investment decision. The author and affiliated institution accept no liability for financial losses or actions taken based on the results of this study."
+    st.warning(disclaimer, icon="⚠️")
     df_recent = df.tail(7)
     if not df_recent.empty:
         col1, col2 = st.columns(2)
