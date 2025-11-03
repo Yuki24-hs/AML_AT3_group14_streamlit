@@ -215,27 +215,7 @@ previous_marketCap = combined_data.iloc[-2]["marketCap"]
 
 
 def run():
-    st.markdown(
-        """
-        <style>
-        h1 {
-            font-size: 2.2rem !important;   /* Title font */
-            font-weight: 700 !important;
-            margin-bottom: 0.5rem;
-        }
-        .stMarkdown p {
-            font-size: 1.3rem !important;   /* Description text */
-            line-height: 1.6;
-        }
-        .predicted-date {
-            font-size: 1.3rem !important;   /* Predicted date text */
-            color: #0f172a;
-            font-weight: 600;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+
     # Page Title
     st.title("Bitcoin BTC Dashboard")
     st.markdown(
@@ -368,7 +348,7 @@ def run():
             delta_percent = (price_change / previous_high) * 100
             pc_color = "green" if price_change >= 0 else "red"
             arrow = "▲" if price_change >= 0 else "▼"
-            
+
             st.markdown(
                 f"""
                 <div style="
