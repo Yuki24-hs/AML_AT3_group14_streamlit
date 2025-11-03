@@ -169,15 +169,15 @@ def get_7d_data(url_path):
     st.error("🚫 Could not retrieve prediction data after multiple attempts. Please try again later.")
     return pd.DataFrame(columns=['date', 'predicted_high'])
 
-# @st.cache_data(ttl=3600)  # cache for 5 minutes (adjust as needed)
-# def get_current_date(url):
-#     """Fetch current date from API and cache the result."""
-#     response = requests.get(url, timeout=800)
-#     if response.status_code == 200:
-#         return response.json()
-#     else:
-#         st.error(f"Failed to fetch date. Status code: {response.status_code}")
-#         return None
+@st.cache_data(ttl=3600)  # cache for 5 minutes (adjust as needed)
+def get_current_date(url):
+    """Fetch current date from API and cache the result."""
+    response = requests.get(url, timeout=800)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"Failed to fetch date. Status code: {response.status_code}")
+        return None
 
 # get the last predicted value for tomorrow
 @st.cache_data(ttl=3600)
@@ -263,21 +263,20 @@ def run():
         )
 
     with st.spinner("🔄 Loading date..."):
-        st.write("to update date")
-        # api_date = get_current_date(API_URL + API_DATE)
-        # if api_date and "current_date" in api_date:
-        #     current_date_str = api_date["current_date"]
+        api_date = get_current_date(API_URL + API_DATE)
+        if api_date and "current_date" in api_date:
+            current_date_str = api_date["current_date"]
 
-        #     # Convert to datetime object
-        #     current_date = datetime.fromisoformat(current_date_str)
+            # Convert to datetime object
+            current_date = datetime.fromisoformat(current_date_str)
 
-        #     # Format as YYYY-MM-DD HH:MM
-        #     formatted_date = current_date.strftime("%Y-%m-%d %H:%M")
+            # Format as YYYY-MM-DD HH:MM
+            formatted_date = current_date.strftime("%Y-%m-%d %H:%M")
 
-        #     # Display in Streamlit
-        #     st.markdown(f"**🕒 Current Time Zone for Data:** {formatted_date}")
-        # else:
-        #     st.warning("⚠️ Could not load current date from API.")
+            # Display in Streamlit
+            st.markdown(f"**🕒 Current Time Zone for Data:** {formatted_date}")
+        else:
+            st.warning("⚠️ Could not load current date from API.")
     
     st.markdown(
     """
